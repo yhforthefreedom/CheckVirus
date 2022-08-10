@@ -43,7 +43,7 @@ def read_xml(udid):
         res = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
         return res
     except subprocess.CalledProcessError:
-        logger.warning(f'Android设备{udid}已拔出，不再监听安装事件')
+        logger.warning(f'Android设备{udid}已拔出，无法正常完成检测')
         return ''
 
 
@@ -87,6 +87,8 @@ def auto_click(brand, udid, keyword, package, file=None, apk_path=None):
 def is_check(udid):
     while True:
         res = read_xml(udid)
+        if not res:
+            break
         if '权限' in res and ('安装准备中' not in res or '正在查验' not in res or '正在扫描' not in res or '正为您' not in res):
             break
         time.sleep(1)
@@ -101,6 +103,7 @@ def screenshot(brand, udid):
 
 
 def check_virus(udid, apk_path, result_list=None):
+    os.system(f"adb -s {udid} shell rm -rf /sdcard/111")
     push_file(udid, apk_path)
     brand = is_brand(udid)
     if not result_list:
