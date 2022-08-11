@@ -6,7 +6,7 @@
 
 ### 使用方法
 ```python
-脚本所在目录> python main.py path
+脚本所在目录> python CheckVirus.py path
 ```
 - path  传入文件路径则是检测单文件报毒情况；传入目录则是检测该目录下所有apk格式文件的报毒情况
 
