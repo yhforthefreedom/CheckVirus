@@ -65,13 +65,9 @@ def parse_location(keyword, text):
         return '0', '0'
 
 
-def auto_click(brand, udid, keyword, package, file=None, apk_path=None):
+def auto_click(udid, keyword, package, file=None, apk_path=None):
     logger.info(f'Android设备{udid}正在启动文件管理')
-    if brand.lower() == 'vivo':
-        os.system(f'adb -s {udid} shell am start -n '
-                  f'com.android.filemanager/com.android.filemanager.FirstPermissionActivity')
-    else:
-        os.system(f'adb -s {udid} shell monkey -p {package} 1')
+    os.system(f'adb -s {udid} shell monkey -p {package} 1')
     res1 = read_xml(udid, keyword)
     x, y = parse_location(keyword, res1)
     os.system(f'adb -s {udid} shell input tap {x} {y}')
@@ -97,7 +93,7 @@ def is_check(udid):
         res = read_xml(udid, '权限')
         if not res:
             break
-        if '安装准备中' not in res and '正在查验' not in res and '正在扫描' not in res and '正为您' not in res:
+        if '安装准备中' not in res and '正在查验' not in res and '正在扫描' not in res and '正为您' not in res and '风险检测中' not in res:
             break
         time.sleep(1)
 
@@ -123,16 +119,16 @@ def check_virus(udid, apk_path, result_list=None):
                 .read().strip()
             if package:
                 os.system(f'adb -s {udid} shell am force-stop com.huawei.filemanager')
-                auto_click(brand, udid, '我的手机', 'com.huawei.filemanager')
+                auto_click(udid, '我的手机', 'com.huawei.filemanager')
             else:
                 os.system(f'adb -s {udid} shell am force-stop com.hihonor.filemanager')
-                auto_click(brand, udid, '我的手机', 'com.hihonor.filemanager')
+                auto_click(udid, '我的手机', 'com.hihonor.filemanager')
         elif brand.lower() == 'xiaomi':
             os.system(f'adb -s {udid} shell am force-stop com.android.fileexplorer')
-            auto_click(brand, udid, '手机', 'com.android.fileexplorer')
+            auto_click(udid, '手机', 'com.android.fileexplorer')
         elif brand.lower() == 'vivo':
-            os.system(f'adb -s {udid} shell am force-stop com.android.fileexplorer')
-            auto_click(brand, udid, '手机存储', 'com.android.fileexplorer')
+            os.system(f'adb -s {udid} shell am force-stop com.android.filemanager')
+            auto_click(udid, '手机存储', 'com.android.filemanager')
         screenshot(brand, udid)
         os.system(f"adb -s {udid} shell rm -rf /sdcard/111")
         logger.info(f'Android设备{udid}病毒检查完成')
@@ -141,22 +137,22 @@ def check_virus(udid, apk_path, result_list=None):
             if index == 0:
                 if brand.lower() == 'oppo':
                     os.system(f'adb -s {udid} shell am force-stop com.coloros.filemanager')
-                    auto_click(brand, udid, '手机存储', 'com.coloros.filemanager', value, apk_path)
+                    auto_click(udid, '手机存储', 'com.coloros.filemanager', value, apk_path)
                 elif brand.lower() == 'huawei' or brand.lower() == 'honor':
                     package = os.popen(f'adb -s {udid} shell pm list package | findstr com.huawei.filemanager')\
                         .read().strip()
                     if package:
                         os.system(f'adb -s {udid} shell am force-stop com.huawei.filemanager')
-                        auto_click(brand, udid, '我的手机', 'com.huawei.filemanager', value, apk_path)
+                        auto_click(udid, '我的手机', 'com.huawei.filemanager', value, apk_path)
                     else:
                         os.system(f'adb -s {udid} shell am force-stop com.hihonor.filemanager')
-                        auto_click(brand, udid, '我的手机', 'com.hihonor.filemanager', value, apk_path)
+                        auto_click(udid, '我的手机', 'com.hihonor.filemanager', value, apk_path)
                 elif brand.lower() == 'xiaomi':
                     os.system(f'adb -s {udid} shell am force-stop com.android.fileexplorer')
-                    auto_click(brand, udid, '手机', 'com.android.fileexplorer', value, apk_path)
+                    auto_click(udid, '手机', 'com.android.fileexplorer', value, apk_path)
                 elif brand.lower() == 'vivo':
-                    os.system(f'adb -s {udid} shell am force-stop com.android.fileexplorer')
-                    auto_click(brand, udid, '手机存储', 'com.android.fileexplorer', value, apk_path)
+                    os.system(f'adb -s {udid} shell am force-stop com.android.filemanager')
+                    auto_click(udid, '手机存储', 'com.android.filemanager', value, apk_path)
             if index != 0:
                 res = read_xml(udid, value)
                 x, y = parse_location(value, res)
