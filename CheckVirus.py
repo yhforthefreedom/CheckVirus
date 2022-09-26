@@ -183,7 +183,7 @@ if __name__ == '__main__':
         os.mkdir("./apk")
     path = os.path.abspath(os.path.dirname(__file__))
     parser = argparse.ArgumentParser(description='一个自动检测华米OV安装APP是否报毒的程序')
-    parser.add_argument('-p', type=str, help='传入的目录或者文件路径', default=f'{path}/apk')
+    parser.add_argument('-p', type=str, help='传入的目录或者文件路径', default=fr'{path}\apk')
     shutil.rmtree(f'{path}/img')
     shutil.rmtree(f'{path}/report')
     os.mkdir(f'{path}/img')
