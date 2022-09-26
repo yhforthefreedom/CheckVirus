@@ -5,6 +5,8 @@ import os
 import re
 import time
 import argparse
+from jinja2 import Environment, FileSystemLoader
+import shutil
 
 
 def get_device_list():
@@ -98,12 +100,22 @@ def is_check(udid):
         time.sleep(1)
 
 
-def screenshot(brand, udid):
+def screenshot(brand, udid, app_name=None):
+    if not os.path.exists("./img"):
+        os.mkdir("./img")
     is_check(udid)
     logger.info(f'Android设备{udid}正在截图')
     c_time = str(time.strftime("%Y%m%d%H%M%S", time.localtime()))
-    os.system(f'adb -s {udid} shell screencap -p /sdcard/111/{brand}_{udid}_{c_time}.png')
-    os.system(f'adb -s {udid} pull /sdcard/111/{brand}_{udid}_{c_time}.png')
+    if not app_name:
+        os.system(f'adb -s {udid} shell screencap -p /sdcard/111/{brand}_{udid}_{c_time}.png')
+        os.system(f'adb -s {udid} pull /sdcard/111/{brand}_{udid}_{c_time}.png ./img')
+    else:
+        os.system(f'adb -s {udid} shell screencap -p /sdcard/111/{brand}_{udid}_{c_time}.png')
+        os.system(f'adb -s {udid} pull /sdcard/111/{brand}_{udid}_{c_time}.png ./img')
+        try:
+            os.rename(f'./img/{brand}_{udid}_{c_time}.png', f'./img/{app_name}_{brand}_{udid}_{c_time}.png')
+        except FileNotFoundError:
+            pass
 
 
 def check_virus(udid, apk_path, result_list=None):
@@ -157,7 +169,8 @@ def check_virus(udid, apk_path, result_list=None):
                 res = read_xml(udid, value)
                 x, y = parse_location(value, res)
                 os.system(f'adb -s {udid} shell input tap {x} {y}')
-            screenshot(brand, udid)
+            app_name = value.split('.')[0]
+            screenshot(brand, udid, app_name)
             logger.info(f'Android设备{udid}的应用{value}病毒检查完成')
             os.system(f'adb -s {udid} shell input keyevent 4')
             if index == len(result_list) - 1:
@@ -166,9 +179,16 @@ def check_virus(udid, apk_path, result_list=None):
 
 
 if __name__ == '__main__':
+    if not os.path.exists("./apk"):
+        os.mkdir("./apk")
+    path = os.path.abspath(os.path.dirname(__file__))
     parser = argparse.ArgumentParser(description='一个自动检测华米OV安装APP是否报毒的程序')
-    parser.add_argument('path', type=str, help='传入的目录或者文件路径')
-    file_path = parser.parse_args().path
+    parser.add_argument('-p', type=str, help='传入的目录或者文件路径', default=f'{path}/apk')
+    shutil.rmtree(f'{path}/img')
+    shutil.rmtree(f'{path}/report')
+    os.mkdir(f'{path}/img')
+    os.mkdir(f'{path}/report')
+    file_path = parser.parse_args().p
     if os.path.exists(file_path):
         devices_list = get_device_list()
         if file_path.split('.')[-1] == 'apk':
@@ -181,8 +201,46 @@ if __name__ == '__main__':
                 if apk.split('.')[-1] == 'apk':
                     target_apk.append(apk)
             if len(target_apk) > 0:
+                task = []
                 for device in devices_list:
-                    threading.Thread(target=check_virus, args=(device, file_path, target_apk)).start()
+                    t = threading.Thread(target=check_virus, args=(device, file_path, target_apk))
+                    task.append(t)
+                    t.start()
+                for t in task:
+                    t.join()
+                apk_arr = [i[:-4] for i in target_apk]
+                img_list = os.listdir('./img')
+                res = dict()
+                for i in apk_arr:
+                    res[i] = {}
+                    for img in img_list:
+                        if 'oppo' in img.lower() and i in img:
+                            res[i].update({"oppo": f'{path}/img/{img}'})
+                        elif 'xiaomi' in img.lower() and i in img:
+                            res[i].update({"xiaomi": f'{path}/img/{img}'})
+                        elif 'vivo' in img.lower() and i in img:
+                            res[i].update({"vivo": f'{path}/img/{img}'})
+                        elif ('huawei' in img.lower() or 'honor' in img.lower()) and i in img:
+                            res[i].update({"huawei": f'{path}/img/{img}'})
+
+                context = {
+                    'create_time': time.strftime("%Y-%m-%d %H:%M:%S"),
+                    'target_dict': res
+                }
+                report_context = {
+                    "context": context
+                }
+                template_environment = Environment(
+                    autoescape=False,
+                    loader=FileSystemLoader(path),
+                    trim_blocks=False)
+                if not os.path.exists("./report"):
+                    os.mkdir("./report")
+                with open(f'{path}/report/{time.strftime("%Y%m%d%H%M%S")}.html',
+                          'w', encoding='utf8') as f:
+                    html = template_environment.get_template('./report.html').render(report_context)
+                    f.write(html)
+                logger.info("----------测试报告生成完成----------")
             else:
                 logger.error('该路径下没有apk格式的文件')
     else:

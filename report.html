@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>安装报毒测试报告</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+	<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<style>
+	table td {
+    vertical-align: middle!important;
+}
+</style>
+<body>
+    <h2 style="text-align: center">华米OV安装报毒测试报告({{context.create_time}})</h2>
+    <br/>
+    <table class="table table-bordered">
+    <thead>
+		<tr>
+            <th style="text-align: center">应用名称</th>
+			<th style="text-align: center">华为</th>
+			<th style="text-align: center">小米</th>
+			<th style="text-align: center">OPPO</th>
+			<th style="text-align: center">VIVO</th>
+		</tr>
+	</thead>
+	<tbody style="text-align: center">
+		{% for key,value in context.target_dict.items() %}
+			<tr>
+				<td>{{key}}</td>
+				{% if value.huawei %}
+				<td><img src="{{value.huawei}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
+				{% else %}
+				<td></td>
+				{% endif %}
+				{% if value.xiaomi %}
+				<td><img src="{{value.xiaomi}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
+				{% else %}
+				<td></td>
+				{% endif %}
+				{% if value.oppo %}
+				<td><img src="{{value.oppo}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
+				{% else %}
+				<td></td>
+				{% endif %}
+				{% if value.vivo %}
+				<td><img src="{{value.vivo}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
+				{% else %}
+				<td></td>
+				{% endif %}
+			</tr>
+		{% endfor %}
+
+	</tbody>
+
+	</table>
+</body>
+
+</html>
