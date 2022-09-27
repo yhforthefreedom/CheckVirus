@@ -6,7 +6,6 @@ import re
 import time
 import argparse
 from jinja2 import Environment, FileSystemLoader
-import shutil
 
 
 def get_device_list():
@@ -114,6 +113,7 @@ def screenshot(brand, udid, app_name=None):
         os.system(f'adb -s {udid} pull /sdcard/111/{brand}_{udid}_{c_time}.png ./img')
         try:
             os.rename(f'./img/{brand}_{udid}_{c_time}.png', f'./img/{app_name}_{brand}_{udid}_{c_time}.png')
+            img_list.append(f'{app_name}_{brand}_{udid}_{c_time}.png')
         except FileNotFoundError:
             pass
 
@@ -184,10 +184,6 @@ if __name__ == '__main__':
     path = os.path.abspath(os.path.dirname(__file__))
     parser = argparse.ArgumentParser(description='一个自动检测华米OV安装APP是否报毒的程序')
     parser.add_argument('-p', type=str, help='传入的目录或者文件路径', default=fr'{path}\apk')
-    shutil.rmtree(f'{path}/img')
-    shutil.rmtree(f'{path}/report')
-    os.mkdir(f'{path}/img')
-    os.mkdir(f'{path}/report')
     file_path = parser.parse_args().p
     if os.path.exists(file_path):
         devices_list = get_device_list()
@@ -196,6 +192,7 @@ if __name__ == '__main__':
                 threading.Thread(target=check_virus, args=(device, file_path)).start()
         else:
             target_apk = []
+            img_list = []
             apk_list = os.listdir(file_path)
             for apk in apk_list:
                 if apk.split('.')[-1] == 'apk':
@@ -209,7 +206,6 @@ if __name__ == '__main__':
                 for t in task:
                     t.join()
                 apk_arr = [i[:-4] for i in target_apk]
-                img_list = os.listdir('./img')
                 res = dict()
                 for i in apk_arr:
                     res[i] = {}
