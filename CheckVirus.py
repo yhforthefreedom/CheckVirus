@@ -205,38 +205,39 @@ if __name__ == '__main__':
                     t.start()
                 for t in task:
                     t.join()
-                apk_arr = [i[:-4] for i in target_apk]
-                res = dict()
-                for i in apk_arr:
-                    res[i] = {}
-                    for img in img_list:
-                        if 'oppo' in img.lower() and i in img:
-                            res[i].update({"oppo": f'{path}/img/{img}'})
-                        elif 'xiaomi' in img.lower() and i in img:
-                            res[i].update({"xiaomi": f'{path}/img/{img}'})
-                        elif 'vivo' in img.lower() and i in img:
-                            res[i].update({"vivo": f'{path}/img/{img}'})
-                        elif ('huawei' in img.lower() or 'honor' in img.lower()) and i in img:
-                            res[i].update({"huawei": f'{path}/img/{img}'})
+                if img_list:
+                    apk_arr = [i[:-4] for i in target_apk]
+                    res = dict()
+                    for i in apk_arr:
+                        res[i] = {}
+                        for img in img_list:
+                            if 'oppo' in img.lower() and i in img:
+                                res[i].update({"oppo": f'{path}/img/{img}'})
+                            elif 'xiaomi' in img.lower() and i in img:
+                                res[i].update({"xiaomi": f'{path}/img/{img}'})
+                            elif 'vivo' in img.lower() and i in img:
+                                res[i].update({"vivo": f'{path}/img/{img}'})
+                            elif ('huawei' in img.lower() or 'honor' in img.lower()) and i in img:
+                                res[i].update({"huawei": f'{path}/img/{img}'})
 
-                context = {
-                    'create_time': time.strftime("%Y-%m-%d %H:%M:%S"),
-                    'target_dict': res
-                }
-                report_context = {
-                    "context": context
-                }
-                template_environment = Environment(
-                    autoescape=False,
-                    loader=FileSystemLoader(path),
-                    trim_blocks=False)
-                if not os.path.exists("./report"):
-                    os.mkdir("./report")
-                with open(f'{path}/report/{time.strftime("%Y%m%d%H%M%S")}.html',
-                          'w', encoding='utf8') as f:
-                    html = template_environment.get_template('./report.html').render(report_context)
-                    f.write(html)
-                logger.info("----------测试报告生成完成----------")
+                    context = {
+                        'create_time': time.strftime("%Y-%m-%d %H:%M:%S"),
+                        'target_dict': res
+                    }
+                    report_context = {
+                        "context": context
+                    }
+                    template_environment = Environment(
+                        autoescape=False,
+                        loader=FileSystemLoader(path),
+                        trim_blocks=False)
+                    if not os.path.exists("./report"):
+                        os.mkdir("./report")
+                    with open(f'{path}/report/{time.strftime("%Y%m%d%H%M%S")}.html',
+                              'w', encoding='utf8') as f:
+                        html = template_environment.get_template('./report.html').render(report_context)
+                        f.write(html)
+                    logger.info("----------测试报告生成完成----------")
             else:
                 logger.error('该路径下没有apk格式的文件')
     else:
