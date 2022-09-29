@@ -6,6 +6,7 @@ import re
 import time
 import argparse
 from jinja2 import Environment, FileSystemLoader
+import webbrowser
 
 
 def get_device_list():
@@ -239,11 +240,13 @@ if __name__ == '__main__':
                         trim_blocks=False)
                     if not os.path.exists("./report"):
                         os.mkdir("./report")
-                    with open(f'{path}/report/{time.strftime("%Y%m%d%H%M%S")}.html',
+                    html_name = time.strftime("%Y%m%d%H%M%S")
+                    with open(f'{path}/report/{html_name}.html',
                               'w', encoding='utf8') as f:
                         html = template_environment.get_template('./report.html').render(report_context)
                         f.write(html)
-                    logger.info("----------测试报告生成完成----------")
+                    logger.info("----------测试报告生成完成,正在打开----------")
+                    webbrowser.open(f'file://{path}/report/{html_name}.html')
             else:
                 logger.error('该路径下没有apk格式的文件')
     else:
