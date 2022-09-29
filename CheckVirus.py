@@ -141,6 +141,9 @@ def check_virus(udid, apk_path, result_list=None):
         elif brand.lower() == 'vivo':
             os.system(f'adb -s {udid} shell am force-stop com.android.filemanager')
             auto_click(udid, '手机存储', 'com.android.filemanager')
+        else:
+            logger.error(f'Android设备{udid}的品牌机型暂未适配')
+            return
         screenshot(brand, udid)
         os.system(f"adb -s {udid} shell rm -rf /sdcard/111")
         logger.info(f'Android设备{udid}病毒检查完成')
@@ -165,6 +168,9 @@ def check_virus(udid, apk_path, result_list=None):
                 elif brand.lower() == 'vivo':
                     os.system(f'adb -s {udid} shell am force-stop com.android.filemanager')
                     auto_click(udid, '手机存储', 'com.android.filemanager', value, apk_path)
+                else:
+                    logger.error(f'Android设备{udid}的品牌机型暂未适配')
+                    return
             if index != 0:
                 res = read_xml(udid, value)
                 x, y = parse_location(value, res)
