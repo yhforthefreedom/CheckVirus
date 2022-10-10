@@ -126,7 +126,7 @@ def check_virus(udid, apk_path, result_list=None):
     if not result_list:
         if brand.lower() == 'oppo':
             os.system(f'adb -s {udid} shell am force-stop com.coloros.filemanager')
-            auto_click(brand, udid, '手机存储', 'com.coloros.filemanager')
+            auto_click(udid, '手机存储', 'com.coloros.filemanager')
         elif brand.lower() == 'huawei' or brand.lower() == 'honor':
             package = os.popen(f'adb -s {udid} shell pm list package | findstr com.huawei.filemanager') \
                 .read().strip()
