@@ -119,6 +119,18 @@ def screenshot(brand, udid, app_name=None):
             pass
 
 
+def package_info(file):
+    envs = os.getenv('path')
+    for env in envs.split(';'):
+        if 'build-tools' in env:
+            info = subprocess.check_output(f'aapt2 dump badging {file} | findstr versionName', shell=True)\
+                .decode('utf-8')
+            package_name, version_code, version_name = re.findall(r"name='(.*?)' versionCode='(.*?)' "
+                                                                  r"versionName='(.*?)'", info)[0]
+            return package_name, version_code, version_name
+    return
+
+
 def check_virus(udid, apk_path, result_list=None):
     os.system(f"adb -s {udid} shell rm -rf /sdcard/111")
     push_file(udid, apk_path)
@@ -204,6 +216,7 @@ if __name__ == '__main__':
             for apk in apk_list:
                 if apk.split('.')[-1] == 'apk':
                     target_apk.append(apk)
+            logger.info(f'安装包检查顺序：{target_apk}')
             if len(target_apk) > 0:
                 task = []
                 for device in devices_list:
@@ -217,6 +230,11 @@ if __name__ == '__main__':
                     res = dict()
                     for i in apk_arr:
                         res[i] = {}
+                        if package_info(f'{file_path}/{i}.apk'):
+                            a, b, c = package_info(f'{file_path}/{i}.apk')
+                            res[i].update({"package_name": a})
+                            res[i].update({"version_code": b})
+                            res[i].update({"version_name": c})
                         for img in img_list:
                             if 'oppo' in img.lower() and i in img:
                                 res[i].update({"oppo": f'{path}/img/{img}'})
@@ -226,7 +244,6 @@ if __name__ == '__main__':
                                 res[i].update({"vivo": f'{path}/img/{img}'})
                             elif ('huawei' in img.lower() or 'honor' in img.lower()) and i in img:
                                 res[i].update({"huawei": f'{path}/img/{img}'})
-
                     context = {
                         'create_time': time.strftime("%Y-%m-%d %H:%M:%S"),
                         'target_dict': res

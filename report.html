@@ -28,7 +28,7 @@
 	<tbody style="text-align: center">
 		{% for key,value in context.target_dict.items() %}
 			<tr>
-				<td>{{key}}</td>
+				<td>{{key}}<br>package_name:{{value.package_name}}<br>version_code:{{value.version_code}}<br>version_name:{{value.version_name}}</td>
 				{% if value.huawei %}
 				<td><img class="pic" src="{{value.huawei}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
 				{% else %}
