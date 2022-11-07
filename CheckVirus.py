@@ -33,13 +33,9 @@ def push_file(udid, apk_path, result_list):
         if len(result_list) <= 6:
             os.system(f'adb -s {udid} push {apk_path} /sdcard/111')
         else:
-            group = len(result_list) // 6 + 1
-            for i in range(0, group):
-                os.mkdir(f'{apk_path}/{i}')
-                for j in result_list[6*i:6*i+6]:
-                    shutil.copy(f'{apk_path}/{j}', f'{apk_path}/{i}')
-                os.system(f'adb -s {udid} push {apk_path}/{i} /sdcard/111')
-                shutil.rmtree(f'{apk_path}/{i}')
+            num = len(target_apk) // 6 + 1
+            for n in range(0, num):
+                os.system(f'adb -s {udid} push {apk_path}/{n} /sdcard/111')
 
 
 def is_brand(udid):
@@ -244,12 +240,22 @@ if __name__ == '__main__':
             logger.info(f'安装包检查顺序：{target_apk}')
             if len(target_apk) > 0:
                 task = []
+                if len(target_apk) > 6:
+                    group = len(target_apk) // 6 + 1
+                    for i in range(0, group):
+                        os.mkdir(f'{file_path}/{i}')
+                        for j in target_apk[6 * i:6 * i + 6]:
+                            shutil.copy(f'{file_path}/{j}', f'{file_path}/{i}')
                 for device in devices_list:
                     t = threading.Thread(target=check_virus, args=(device, file_path, target_apk))
                     task.append(t)
                     t.start()
                 for t in task:
                     t.join()
+                if len(target_apk) > 6:
+                    group = len(target_apk) // 6 + 1
+                    for i in range(0, group):
+                        shutil.rmtree(f'{file_path}/{i}')
                 if img_list:
                     apk_arr = [i[:-4] for i in target_apk]
                     res = dict()
