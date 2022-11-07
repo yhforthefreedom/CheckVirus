@@ -7,6 +7,7 @@ import time
 import argparse
 from jinja2 import Environment, FileSystemLoader
 import webbrowser
+import shutil
 
 
 def get_device_list():
@@ -24,12 +25,21 @@ def get_device_list():
     return device_list
 
 
-def push_file(udid, apk_path):
+def push_file(udid, apk_path, result_list):
     os.system(f'adb -s {udid} shell mkdir /sdcard/111')
     if apk_path.split('.')[-1] == 'apk':
         os.system(f'adb -s {udid} push {apk_path} /sdcard/111/1.apk')
     else:
-        os.system(f'adb -s {udid} push {apk_path} /sdcard/111')
+        if len(result_list) <= 6:
+            os.system(f'adb -s {udid} push {apk_path} /sdcard/111')
+        else:
+            group = len(result_list) // 6 + 1
+            for i in range(0, group):
+                os.mkdir(f'{apk_path}/{i}')
+                for j in result_list[6*i:6*i+6]:
+                    shutil.copy(f'{apk_path}/{j}', f'{apk_path}/{i}')
+                os.system(f'adb -s {udid} push {apk_path}/{i} /sdcard/111')
+                shutil.rmtree(f'{apk_path}/{i}')
 
 
 def is_brand(udid):
@@ -67,7 +77,7 @@ def parse_location(keyword, text):
         return '0', '0'
 
 
-def auto_click(udid, keyword, package, file=None, apk_path=None):
+def auto_click(udid, keyword, package, file=None, apk_path=None, apk_count=None):
     logger.info(f'Android设备{udid}正在启动文件管理')
     os.system(f'adb -s {udid} shell monkey -p {package} 1')
     res1 = read_xml(udid, keyword)
@@ -82,11 +92,16 @@ def auto_click(udid, keyword, package, file=None, apk_path=None):
         x, y = parse_location('1.apk', res3)
 
     else:
-        res3 = read_xml(udid, apk_path.split('\\')[-1])
-        x, y = parse_location(apk_path.split('\\')[-1], res3)
-        os.system(f'adb -s {udid} shell input tap {x} {y}')
-        res4 = read_xml(udid, file)
-        x, y = parse_location(file, res4)
+        if apk_count > 6:
+            res4 = read_xml(udid, '0')
+            x, y = parse_location('0', res4)
+            os.system(f'adb -s {udid} shell input tap {x} {y}')
+        else:
+            res3 = read_xml(udid, apk_path.split('\\')[-1])
+            x, y = parse_location(apk_path.split('\\')[-1], res3)
+            os.system(f'adb -s {udid} shell input tap {x} {y}')
+        res5 = read_xml(udid, file)
+        x, y = parse_location(file, res5)
     os.system(f'adb -s {udid} shell input tap {x} {y}')
 
 
@@ -133,7 +148,7 @@ def package_info(file):
 
 def check_virus(udid, apk_path, result_list=None):
     os.system(f"adb -s {udid} shell rm -rf /sdcard/111")
-    push_file(udid, apk_path)
+    push_file(udid, apk_path, result_list)
     brand = is_brand(udid)
     if not result_list:
         if brand.lower() == 'oppo':
@@ -161,37 +176,47 @@ def check_virus(udid, apk_path, result_list=None):
         os.system(f"adb -s {udid} shell rm -rf /sdcard/111")
         logger.info(f'Android设备{udid}病毒检查完成')
     else:
+        count = 0
         for index, value in enumerate(result_list):
             if index == 0:
                 if brand.lower() == 'oppo':
                     os.system(f'adb -s {udid} shell am force-stop com.coloros.filemanager')
-                    auto_click(udid, '手机存储', 'com.coloros.filemanager', value, apk_path)
+                    auto_click(udid, '手机存储', 'com.coloros.filemanager', value, apk_path, len(result_list))
                 elif brand.lower() == 'huawei' or brand.lower() == 'honor':
                     package = os.popen(f'adb -s {udid} shell pm list package | findstr com.huawei.filemanager')\
                         .read().strip()
                     if package:
                         os.system(f'adb -s {udid} shell am force-stop com.huawei.filemanager')
-                        auto_click(udid, '我的手机', 'com.huawei.filemanager', value, apk_path)
+                        auto_click(udid, '我的手机', 'com.huawei.filemanager', value, apk_path, len(result_list))
                     else:
                         os.system(f'adb -s {udid} shell am force-stop com.hihonor.filemanager')
-                        auto_click(udid, '我的手机', 'com.hihonor.filemanager', value, apk_path)
+                        auto_click(udid, '我的手机', 'com.hihonor.filemanager', value, apk_path, len(result_list))
                 elif brand.lower() == 'xiaomi':
                     os.system(f'adb -s {udid} shell am force-stop com.android.fileexplorer')
-                    auto_click(udid, '手机', 'com.android.fileexplorer', value, apk_path)
+                    auto_click(udid, '手机', 'com.android.fileexplorer', value, apk_path, len(result_list))
                 elif brand.lower() == 'vivo':
                     os.system(f'adb -s {udid} shell am force-stop com.android.filemanager')
-                    auto_click(udid, '手机存储', 'com.android.filemanager', value, apk_path)
+                    auto_click(udid, '手机存储', 'com.android.filemanager', value, apk_path, len(result_list))
                 else:
                     logger.error(f'Android设备{udid}的品牌机型暂未适配')
                     return
             if index != 0:
-                res = read_xml(udid, value)
-                x, y = parse_location(value, res)
+                res1 = read_xml(udid, value)
+                x, y = parse_location(value, res1)
+                os.system(f'adb -s {udid} shell input tap {x} {y}')
+            if index != 0 and index % 6 == 0:
+                os.system(f'adb -s {udid} shell input keyevent 4')
+                res2 = read_xml(udid, f'{count+1}')
+                x, y = parse_location(f'{count+1}', res2)
+                os.system(f'adb -s {udid} shell input tap {x} {y}')
+                res3 = read_xml(udid, value)
+                x, y = parse_location(value, res3)
                 os.system(f'adb -s {udid} shell input tap {x} {y}')
             app_name = value.split('.')[0]
             screenshot(brand, udid, app_name)
             logger.info(f'Android设备{udid}的应用{value}病毒检查完成')
             os.system(f'adb -s {udid} shell input keyevent 4')
+
             if index == len(result_list) - 1:
                 os.system(f"adb -s {udid} shell rm -rf /sdcard/111")
                 logger.info(f'Android设备{udid}病毒检查完成')
