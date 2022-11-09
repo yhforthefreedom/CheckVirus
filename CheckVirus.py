@@ -33,7 +33,7 @@ def push_file(udid, apk_path, result_list):
         if len(result_list) <= 6:
             os.system(f'adb -s {udid} push {apk_path} /sdcard/111')
         else:
-            num = len(target_apk) // 6 + 1
+            num = len(result_list) // 6 + 1
             for n in range(0, num):
                 os.system(f'adb -s {udid} push {apk_path}/{n} /sdcard/111')
 
@@ -107,14 +107,19 @@ def is_check(udid):
         if not res:
             break
         if '安装准备中' not in res and '正在查验' not in res and '正在扫描' not in res and '正为您' not in res and '风险检测中' not in res:
-            break
+            # os.system(f'adb -s {udid} shell uiautomator dump')
+            result = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
+            if '病毒' in result:
+                return 'yes'
+            else:
+                return 'no'
         time.sleep(1)
 
 
 def screenshot(brand, udid, app_name=None):
     if not os.path.exists("./img"):
         os.mkdir("./img")
-    is_check(udid)
+    result = is_check(udid)
     logger.info(f'Android设备{udid}正在截图')
     c_time = str(time.strftime("%Y%m%d%H%M%S", time.localtime()))
     if not app_name:
@@ -124,8 +129,8 @@ def screenshot(brand, udid, app_name=None):
         os.system(f'adb -s {udid} shell screencap -p /sdcard/111/{brand}_{udid}_{c_time}.png')
         os.system(f'adb -s {udid} pull /sdcard/111/{brand}_{udid}_{c_time}.png ./img')
         try:
-            os.rename(f'./img/{brand}_{udid}_{c_time}.png', f'./img/{app_name}_{brand}_{udid}_{c_time}.png')
-            img_list.append(f'{app_name}_{brand}_{udid}_{c_time}.png')
+            os.rename(f'./img/{brand}_{udid}_{c_time}.png', f'./img/{app_name}_{brand}_{udid}_{c_time}_{result}.png')
+            img_list.append(f'{app_name}_{brand}_{udid}_{c_time}_{result}.png')
         except FileNotFoundError:
             pass
 
@@ -240,8 +245,9 @@ if __name__ == '__main__':
             logger.info(f'安装包检查顺序：{target_apk}')
             if len(target_apk) > 0:
                 task = []
+                group = len(target_apk) // 6 + 1
                 if len(target_apk) > 6:
-                    group = len(target_apk) // 6 + 1
+                    logger.info('由于需要检测的安装包大于6个，采用6个为一组，创建多个文件夹的方法')
                     for i in range(0, group):
                         os.mkdir(f'{file_path}/{i}')
                         for j in target_apk[6 * i:6 * i + 6]:
@@ -253,7 +259,6 @@ if __name__ == '__main__':
                 for t in task:
                     t.join()
                 if len(target_apk) > 6:
-                    group = len(target_apk) // 6 + 1
                     for i in range(0, group):
                         shutil.rmtree(f'{file_path}/{i}')
                 if img_list:
@@ -266,15 +271,31 @@ if __name__ == '__main__':
                             res[i].update({"package_name": a})
                             res[i].update({"version_code": b})
                             res[i].update({"version_name": c})
+                        res[i].update({"huawei": {}})
+                        res[i].update({"xiaomi": {}})
+                        res[i].update({"oppo": {}})
+                        res[i].update({"vivo": {}})
                         for img in img_list:
                             if 'oppo' in img.lower() and i in img:
-                                res[i].update({"oppo": f'{path}/img/{img}'})
+                                if 'yes' in img:
+                                    res[i].update({"oppo": {'address': f'{path}/img/{img}', 'is_virus': 1}})
+                                else:
+                                    res[i].update({"oppo": {'address': f'{path}/img/{img}'}})
                             elif 'xiaomi' in img.lower() and i in img:
-                                res[i].update({"xiaomi": f'{path}/img/{img}'})
+                                if 'yes' in img:
+                                    res[i].update({"xiaomi": {'address': f'{path}/img/{img}', 'is_virus': 1}})
+                                else:
+                                    res[i].update({"xiaomi": {'address': f'{path}/img/{img}'}})
                             elif 'vivo' in img.lower() and i in img:
-                                res[i].update({"vivo": f'{path}/img/{img}'})
+                                if 'yes' in img:
+                                    res[i].update({"vivo": {'address': f'{path}/img/{img}', 'is_virus': 1}})
+                                else:
+                                    res[i].update({"vivo": {'address': f'{path}/img/{img}'}})
                             elif ('huawei' in img.lower() or 'honor' in img.lower()) and i in img:
-                                res[i].update({"huawei": f'{path}/img/{img}'})
+                                if 'yes' in img:
+                                    res[i].update({"huawei": {'address': f'{path}/img/{img}', 'is_virus': 1}})
+                                else:
+                                    res[i].update({"huawei": {'address': f'{path}/img/{img}'}})
                     context = {
                         'create_time': time.strftime("%Y-%m-%d %H:%M:%S"),
                         'target_dict': res
