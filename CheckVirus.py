@@ -27,6 +27,7 @@ def get_device_list():
 
 def push_file(udid, apk_path, result_list):
     os.system(f'adb -s {udid} shell mkdir /sdcard/111')
+    os.system(f'adb -s {udid} shell mkdir /sdcard/111/img')
     if apk_path.split('.')[-1] == 'apk':
         os.system(f'adb -s {udid} push {apk_path} /sdcard/111/1.apk')
     else:
@@ -43,6 +44,13 @@ def is_brand(udid):
     brand = brand.read().strip()
     logger.info(f'Android设备{udid}手机品牌是{brand}')
     return brand
+
+
+def is_model(udid):
+    model = os.popen(f'adb -s {udid} shell getprop ro.product.model')
+    model = model.read().strip()
+    logger.info(f'Android设备{udid}手机机型是{model}')
+    model_list.append(model)
 
 
 def read_xml(udid, keyword):
@@ -123,11 +131,11 @@ def screenshot(brand, udid, app_name=None):
     logger.info(f'Android设备{udid}正在截图')
     c_time = str(time.strftime("%Y%m%d%H%M%S", time.localtime()))
     if not app_name:
-        os.system(f'adb -s {udid} shell screencap -p /sdcard/111/{brand}_{udid}_{c_time}.png')
-        os.system(f'adb -s {udid} pull /sdcard/111/{brand}_{udid}_{c_time}.png ./img')
+        os.system(f'adb -s {udid} shell screencap -p /sdcard/111/img/{brand}_{udid}_{c_time}.png')
+        os.system(f'adb -s {udid} pull /sdcard/111/img/{brand}_{udid}_{c_time}.png ./img')
     else:
-        os.system(f'adb -s {udid} shell screencap -p /sdcard/111/{brand}_{udid}_{c_time}.png')
-        os.system(f'adb -s {udid} pull /sdcard/111/{brand}_{udid}_{c_time}.png ./img')
+        os.system(f'adb -s {udid} shell screencap -p /sdcard/111/img/{brand}_{udid}_{c_time}.png')
+        os.system(f'adb -s {udid} pull /sdcard/111/img/{brand}_{udid}_{c_time}.png ./img')
         try:
             os.rename(f'./img/{brand}_{udid}_{c_time}.png', f'./img/{app_name}_{brand}_{udid}_{c_time}_{result}.png')
             img_list.append(f'{app_name}_{brand}_{udid}_{c_time}_{result}.png')
@@ -151,6 +159,7 @@ def check_virus(udid, apk_path, result_list=None):
     os.system(f"adb -s {udid} shell rm -rf /sdcard/111")
     push_file(udid, apk_path, result_list)
     brand = is_brand(udid)
+    is_model(udid)
     if not result_list:
         if brand.lower() == 'oppo':
             os.system(f'adb -s {udid} shell am force-stop com.coloros.filemanager')
@@ -206,9 +215,10 @@ def check_virus(udid, apk_path, result_list=None):
                 x, y = parse_location(value, res1)
                 os.system(f'adb -s {udid} shell input tap {x} {y}')
             if index != 0 and index % 6 == 0:
+                count += 1
                 os.system(f'adb -s {udid} shell input keyevent 4')
-                res2 = read_xml(udid, f'{count+1}')
-                x, y = parse_location(f'{count+1}', res2)
+                res2 = read_xml(udid, f'{count}')
+                x, y = parse_location(f'{count}', res2)
                 os.system(f'adb -s {udid} shell input tap {x} {y}')
                 res3 = read_xml(udid, value)
                 x, y = parse_location(value, res3)
@@ -237,13 +247,14 @@ if __name__ == '__main__':
                 threading.Thread(target=check_virus, args=(device, file_path)).start()
         else:
             target_apk = []
-            img_list = []
             apk_list = os.listdir(file_path)
             for apk in apk_list:
                 if apk.split('.')[-1] == 'apk':
                     target_apk.append(apk)
             logger.info(f'安装包检查顺序：{target_apk}')
             if len(target_apk) > 0:
+                img_list = []
+                model_list = []
                 task = []
                 group = len(target_apk) // 6 + 1
                 if len(target_apk) > 6:
@@ -252,16 +263,19 @@ if __name__ == '__main__':
                         os.mkdir(f'{file_path}/{i}')
                         for j in target_apk[6 * i:6 * i + 6]:
                             shutil.copy(f'{file_path}/{j}', f'{file_path}/{i}')
+                start_time = time.time()
                 for device in devices_list:
                     t = threading.Thread(target=check_virus, args=(device, file_path, target_apk))
                     task.append(t)
                     t.start()
                 for t in task:
                     t.join()
+                end_time = time.time()
                 if len(target_apk) > 6:
                     for i in range(0, group):
                         shutil.rmtree(f'{file_path}/{i}')
                 if img_list:
+                    failed = 0
                     apk_arr = [i[:-4] for i in target_apk]
                     res = dict()
                     for i in apk_arr:
@@ -276,6 +290,8 @@ if __name__ == '__main__':
                         res[i].update({"oppo": {}})
                         res[i].update({"vivo": {}})
                         for img in img_list:
+                            if 'yes' in img:
+                                failed += 1
                             if 'oppo' in img.lower() and i in img:
                                 if 'yes' in img:
                                     res[i].update({"oppo": {'address': f'{path}/img/{img}', 'is_virus': 1}})
@@ -296,9 +312,17 @@ if __name__ == '__main__':
                                     res[i].update({"huawei": {'address': f'{path}/img/{img}', 'is_virus': 1}})
                                 else:
                                     res[i].update({"huawei": {'address': f'{path}/img/{img}'}})
+                    failed = failed / len(apk_arr)
+                    total = len(devices_list)*len(apk_arr)
+                    fail_rate = round(failed / total, 3)*100
                     context = {
                         'create_time': time.strftime("%Y-%m-%d %H:%M:%S"),
-                        'target_dict': res
+                        'target_dict': res,
+                        'model_list': model_list,
+                        'duration': round(end_time - start_time, 2),
+                        'status': {'pass': int(total-failed), 'fail': int(failed),
+                                   'fail_rate': fail_rate, 'pass_rate': 100 - fail_rate}
+
                     }
                     report_context = {
                         "context": context

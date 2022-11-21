@@ -6,6 +6,8 @@
     <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 	<script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
 	<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="http://img.itest.info/seldom-main.css">
+    <link rel="stylesheet" href="http://img.itest.info/seldom-utilities.css">
 </head>
 <style>
 	table td {
@@ -13,16 +15,95 @@
 }
 </style>
 <body>
-    <h2 style="text-align: center">华米OV安装报毒测试报告({{context.create_time}})</h2>
+    <h2 style="text-align: center;margin-top: 20px">华米OV安装报毒测试报告</h2>
     <br/>
+	<div id="headContainer" class="container-fluid mm-active">
+    <div class="row">
+        <div class="col-12 col-lg-5 col-xl-4 d-flex" style="float:left;margin-left: 5%">
+            <div class='card flex-fill'>
+                <div class="card-body my-2">
+                    <h4 class="header-title">Overview</h4>
+                    <table class="table my-0">
+                        <tbody>
+                            <tr>
+                                <td> Start Time</td>
+                                <td class="text-right">{{context.create_time}}</td>
+                            </tr>
+                            <tr>
+                                <td> Duration</td>
+                                <td class="text-right">{{context.duration}}s</td>
+                            </tr>
+
+                            <tr>
+                                <td>Model</td>
+                                <td class="text-right">{{context.model_list}}</td>
+                            </tr>
+							<tr>
+                                <td> Status</td>
+                                <td class="text-right"><p>Passed: {{context.status.pass}}</p><p>Failed: {{context.status.fail}}</p></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div style="width: 20%;margin-left: 25%">
+            <div class="card" style="height: 45%;">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col"><span class="h6 font-semibold text-muted text-sm d-block mb-2">Passed</span>
+                            <span class="h3 font-bold mb-0">{{context.status.pass}}</span>
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon icon-shape bg-success text-white text-lg rounded-circle">P</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 mb-0 text-sm">
+                        <span class="badge badge-pill bg-soft-warning text-success me-2">{{context.status.pass_rate}}%</span>
+                        <span class="text-nowrap text-xs text-muted">Pass rate</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="progress" style="width:70%; margin-top: 5px;">
+                            <div class="progress-bar bg-success" role="progressbar" aria-valuenow="83" aria-valuemin="0"
+                                aria-valuemax="100" style="width:{{context.status.pass_rate}}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card" style="height: 45%; top: 10%;">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col"><span class="h6 font-semibold text-muted text-sm d-block mb-2">Failed</span>
+                            <span class="h3 font-bold mb-0">{{context.status.fail}}</span></div>
+                        <div class="col-auto">
+                            <div class="icon icon-shape bg-warning text-white text-lg rounded-circle">F</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 mb-0 text-sm">
+                        <span class="badge badge-pill bg-soft-warning text-warning me-2">{{context.status.fail_rate}}%</span>
+                        <span class="text-nowrap text-xs text-muted">Failure rate</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="progress" style="width:70%; margin-top: 5px;">
+                            <div class="progress-bar bg-warning" role="progressbar" aria-valuenow="83" aria-valuemin="0"
+                                aria-valuemax="100" style="width:{{context.status.fail_rate}}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    <br><br>
     <table class="table table-bordered">
     <thead>
 		<tr>
-            <th style="text-align: center">应用名称</th>
-			<th style="text-align: center">华为</th>
-			<th style="text-align: center">小米</th>
-			<th style="text-align: center">OPPO</th>
-			<th style="text-align: center">VIVO</th>
+            <th style="text-align: center;vertical-align: middle!important"><strong>应用名称</strong></th>
+			<th style="text-align: center"><img src="https://imgm.cnmo.com/manu_photo/new/0/517cbedfd2a3e.jpg" alt="华为"></th>
+			<th style="text-align: center"><img src="https://imgm.cnmo.com/manu_photo/new/32/6073d6debc1af.jpg" alt="小米" title="小米"></th>
+			<th style="text-align: center"><img src="https://imgm.cnmo.com/manu_photo/new/1/5c85f52f01756.jpg" alt="OPPO" title="OPPO"></th>
+			<th style="text-align: center"><img src="https://imgm.cnmo.com/manu_photo/new/1/5c21d17230b15.jpg" alt="vivo" title="vivo"></th>
 		</tr>
 	</thead>
 	<tbody style="text-align: center">
