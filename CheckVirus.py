@@ -152,7 +152,6 @@ def package_info(file):
             package_name, version_code, version_name = re.findall(r"name='(.*?)' versionCode='(.*?)' "
                                                                   r"versionName='(.*?)'", info)[0]
             return package_name, version_code, version_name
-    return
 
 
 def check_virus(udid, apk_path, result_list=None):
@@ -211,23 +210,19 @@ def check_virus(udid, apk_path, result_list=None):
                     logger.error(f'Android设备{udid}的品牌机型暂未适配')
                     return
             if index != 0:
+                if index % 6 == 0:  # 下一个文件夹的apk
+                    count += 1
+                    os.system(f'adb -s {udid} shell input keyevent 4')
+                    res2 = read_xml(udid, f'{count}')
+                    x, y = parse_location(f'{count}', res2)
+                    os.system(f'adb -s {udid} shell input tap {x} {y}')
                 res1 = read_xml(udid, value)
                 x, y = parse_location(value, res1)
-                os.system(f'adb -s {udid} shell input tap {x} {y}')
-            if index != 0 and index % 6 == 0:
-                count += 1
-                os.system(f'adb -s {udid} shell input keyevent 4')
-                res2 = read_xml(udid, f'{count}')
-                x, y = parse_location(f'{count}', res2)
-                os.system(f'adb -s {udid} shell input tap {x} {y}')
-                res3 = read_xml(udid, value)
-                x, y = parse_location(value, res3)
                 os.system(f'adb -s {udid} shell input tap {x} {y}')
             app_name = value.split('.')[0]
             screenshot(brand, udid, app_name)
             logger.info(f'Android设备{udid}的应用{value}病毒检查完成')
             os.system(f'adb -s {udid} shell input keyevent 4')
-
             if index == len(result_list) - 1:
                 os.system(f"adb -s {udid} shell rm -rf /sdcard/111")
                 logger.info(f'Android设备{udid}病毒检查完成')
@@ -271,6 +266,7 @@ if __name__ == '__main__':
                 for t in task:
                     t.join()
                 end_time = time.time()
+                logger.info('----------测试报告正在生成,请稍候----------')
                 if len(target_apk) > 6:
                     for i in range(0, group):
                         shutil.rmtree(f'{file_path}/{i}')
