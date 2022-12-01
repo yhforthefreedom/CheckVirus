@@ -310,14 +310,14 @@ if __name__ == '__main__':
                                     res[i].update({"huawei": {'address': f'{path}/img/{img}'}})
                     failed = failed / len(apk_arr)
                     total = len(devices_list)*len(apk_arr)
-                    fail_rate = round(failed / total, 3)*100
+                    fail_rate = round(failed / total * 100, 1)
                     context = {
                         'create_time': time.strftime("%Y-%m-%d %H:%M:%S"),
                         'target_dict': res,
                         'model_list': model_list,
                         'duration': round(end_time - start_time, 2),
                         'status': {'pass': int(total-failed), 'fail': int(failed),
-                                   'fail_rate': fail_rate, 'pass_rate': 100 - fail_rate}
+                                   'fail_rate': fail_rate, 'pass_rate': round((100 - fail_rate), 1)}
 
                     }
                     report_context = {
