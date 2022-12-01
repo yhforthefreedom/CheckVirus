@@ -81,12 +81,18 @@ def parse_location(keyword, text):
         return '0', '0'
 
 
-def auto_click(udid, keyword, package, file=None, apk_path=None, apk_count=None):
+def auto_click(udid, package, file=None, apk_path=None, apk_count=None):
     logger.info(f'Android设备{udid}正在启动文件管理')
     os.system(f'adb -s {udid} shell monkey -p {package} 1')
-    res1 = read_xml(udid, keyword)
-    x, y = parse_location(keyword, res1)
-    os.system(f'adb -s {udid} shell input tap {x} {y}')
+    for keyword in ['我的手机', '手机存储', '设备存储', '手机']:
+        logger.info(f'Android设备{udid}寻找关键字"{keyword}"')
+        os.system(f'adb -s {udid} shell uiautomator dump')
+        text = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
+        if keyword in text:
+            logger.info(f'Android设备{udid}命中关键字"{keyword}"')
+            x, y = parse_location(keyword, text)
+            os.system(f'adb -s {udid} shell input tap {x} {y}')
+            break
     res2 = read_xml(udid, '111')
     x, y = parse_location('111', res2)
     os.system(f'adb -s {udid} shell input tap {x} {y}')
@@ -115,7 +121,6 @@ def is_check(udid):
         if not res:
             break
         if '安装准备中' not in res and '正在查验' not in res and '正在扫描' not in res and '正为您' not in res and '风险检测中' not in res:
-            # os.system(f'adb -s {udid} shell uiautomator dump')
             result = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
             if '病毒' in result:
                 return 'yes'
@@ -162,22 +167,22 @@ def check_virus(udid, apk_path, result_list=None):
     if not result_list:
         if brand.lower() == 'oppo':
             os.system(f'adb -s {udid} shell am force-stop com.coloros.filemanager')
-            auto_click(udid, '手机存储', 'com.coloros.filemanager')
+            auto_click(udid, 'com.coloros.filemanager')
         elif brand.lower() == 'huawei' or brand.lower() == 'honor':
             package = os.popen(f'adb -s {udid} shell pm list package | findstr com.huawei.filemanager') \
                 .read().strip()
             if package:
                 os.system(f'adb -s {udid} shell am force-stop com.huawei.filemanager')
-                auto_click(udid, '我的手机', 'com.huawei.filemanager')
+                auto_click(udid, 'com.huawei.filemanager')
             else:
                 os.system(f'adb -s {udid} shell am force-stop com.hihonor.filemanager')
-                auto_click(udid, '我的手机', 'com.hihonor.filemanager')
+                auto_click(udid, 'com.hihonor.filemanager')
         elif brand.lower() == 'xiaomi':
             os.system(f'adb -s {udid} shell am force-stop com.android.fileexplorer')
-            auto_click(udid, '手机', 'com.android.fileexplorer')
+            auto_click(udid, 'com.android.fileexplorer')
         elif brand.lower() == 'vivo':
             os.system(f'adb -s {udid} shell am force-stop com.android.filemanager')
-            auto_click(udid, '手机存储', 'com.android.filemanager')
+            auto_click(udid, 'com.android.filemanager')
         else:
             logger.error(f'Android设备{udid}的品牌机型暂未适配')
             return
@@ -190,22 +195,22 @@ def check_virus(udid, apk_path, result_list=None):
             if index == 0:
                 if brand.lower() == 'oppo':
                     os.system(f'adb -s {udid} shell am force-stop com.coloros.filemanager')
-                    auto_click(udid, '手机存储', 'com.coloros.filemanager', value, apk_path, len(result_list))
+                    auto_click(udid, 'com.coloros.filemanager', value, apk_path, len(result_list))
                 elif brand.lower() == 'huawei' or brand.lower() == 'honor':
                     package = os.popen(f'adb -s {udid} shell pm list package | findstr com.huawei.filemanager')\
                         .read().strip()
                     if package:
                         os.system(f'adb -s {udid} shell am force-stop com.huawei.filemanager')
-                        auto_click(udid, '我的手机', 'com.huawei.filemanager', value, apk_path, len(result_list))
+                        auto_click(udid, 'com.huawei.filemanager', value, apk_path, len(result_list))
                     else:
                         os.system(f'adb -s {udid} shell am force-stop com.hihonor.filemanager')
-                        auto_click(udid, '我的手机', 'com.hihonor.filemanager', value, apk_path, len(result_list))
+                        auto_click(udid, 'com.hihonor.filemanager', value, apk_path, len(result_list))
                 elif brand.lower() == 'xiaomi':
                     os.system(f'adb -s {udid} shell am force-stop com.android.fileexplorer')
-                    auto_click(udid, '手机', 'com.android.fileexplorer', value, apk_path, len(result_list))
+                    auto_click(udid, 'com.android.fileexplorer', value, apk_path, len(result_list))
                 elif brand.lower() == 'vivo':
                     os.system(f'adb -s {udid} shell am force-stop com.android.filemanager')
-                    auto_click(udid, '手机存储', 'com.android.filemanager', value, apk_path, len(result_list))
+                    auto_click(udid, 'com.android.filemanager', value, apk_path, len(result_list))
                 else:
                     logger.error(f'Android设备{udid}的品牌机型暂未适配')
                     return
@@ -235,6 +240,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='一个自动检测华米OV安装APP是否报毒的程序')
     parser.add_argument('-p', type=str, help='传入的目录或者文件路径', default=fr'{path}\apk')
     file_path = parser.parse_args().p
+    model_list = []
     if os.path.exists(file_path):
         devices_list = get_device_list()
         if file_path.split('.')[-1] == 'apk':
@@ -249,7 +255,6 @@ if __name__ == '__main__':
             logger.info(f'安装包检查顺序：{target_apk}')
             if len(target_apk) > 0:
                 img_list = []
-                model_list = []
                 task = []
                 group = len(target_apk) // 6 + 1
                 if len(target_apk) > 6:
