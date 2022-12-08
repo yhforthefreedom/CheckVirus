@@ -13,6 +13,43 @@
 	table td {
     vertical-align: middle!important;
 }
+    #rocket-to-top div {
+    left: 0;
+    margin: 0;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    top: 0;
+    width: 149px;
+}
+#rocket-to-top .level-2 {
+    background: url("http://images.cnblogs.com/cnblogs_com/xujingyang/1227088/o_o_rocket_button_up.png") no-repeat scroll -149px 0 transparent;
+    display: none;
+    height: 250px;
+    opacity: 0;
+    z-index: 1;
+}
+#rocket-to-top .level-3 {
+    background: none repeat scroll 0 0 transparent;
+    cursor: pointer;
+    display: block;
+    height: 150px;
+    z-index: 2;
+}
+#rocket-to-top {
+    background: url("http://images.cnblogs.com/cnblogs_com/xujingyang/1227088/o_o_rocket_button_up.png") no-repeat scroll 0 0 transparent;
+    cursor: default;
+    display: block;
+    height: 250px;
+    margin: -125px 0 0;
+    overflow: hidden;
+    padding: 0;
+    position: fixed;
+    right: 0;
+    top: 80%;
+    width: 149px;
+    z-index: 11;
+}
 </style>
 <body>
     <h2 style="text-align: center;margin-top: 20px">华米OV安装报毒测试报告</h2>
@@ -40,7 +77,16 @@
                             </tr>
 							<tr>
                                 <td> Status</td>
-                                <td class="text-right"><p>Passed: {{context.status.pass}}</p><p>Failed: {{context.status.fail}}</p></td>
+                                <td class="text-right">Passed: {{context.status.pass}}&nbsp;&nbsp;Failed: {{context.status.fail}}</td>
+                            </tr>
+                            <tr>
+                                <td>Virus APP</td>
+
+                                <td class="text-right">
+                                    {% for app in context.virus_list %}
+                                    <a href="#{{app}}">{{app}}</a>
+                                    {% endfor %}
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -111,28 +157,28 @@
 			<tr>
 				<td>{{key}}<br>package_name:{{value.package_name}}<br>version_code:{{value.version_code}}<br>version_name:{{value.version_name}}</td>
 				{% if value.huawei.is_virus %}
-				<td><span class="label label-danger">危险标签</span><img class="pic" src="{{value.huawei.address}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
+				<td><a name="{{key}}"></a><span class="label label-danger">报毒标签</span><img class="pic" src="{{value.huawei.address}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
 				{% elif value.huawei.address %}
 				<td><img class="pic" src="{{value.huawei.address}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
 				{% else %}
 				<td></td>
 				{% endif %}
 				{% if value.xiaomi.is_virus %}
-				<td><span class="label label-danger">危险标签</span><img class="pic" src="{{value.xiaomi.address}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
+				<td><a name="{{key}}"></a><span class="label label-danger">危险标签</span><img class="pic" src="{{value.xiaomi.address}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
 				{% elif value.xiaomi.address %}
 				<td><img class="pic" src="{{value.xiaomi.address}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
 				{% else %}
 				<td></td>
 				{% endif %}
 				{% if value.oppo.is_virus %}
-				<td><span class="label label-danger">危险标签</span><img class="pic" src="{{value.oppo.address}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
+				<td><a name="{{key}}"></a><span class="label label-danger">危险标签</span><img class="pic" src="{{value.oppo.address}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
 				{% elif value.oppo.address %}
 				<td><img class="pic" src="{{value.oppo.address}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
 				{% else %}
 				<td></td>
 				{% endif %}
 				{% if value.vivo.is_virus %}
-				<td><span class="label label-danger">危险标签</span><img class="pic" src="{{value.vivo.address}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
+				<td><a name="{{key}}"></a><span class="label label-danger">危险标签</span><img class="pic" src="{{value.vivo.address}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
 				{% elif value.vivo.address %}
 				<td><img class="pic" src="{{value.vivo.address}}" style="width: 250px;height: 400px" alt="图片地址错误，无法正常显示"></td>
 				{% else %}
@@ -149,6 +195,10 @@
         <img id="bigimg" style="border:5px solid #fff;" src="" alt="图片地址错误，无法正常显示" />
     </div>
 	</div>
+    <div style="display: none;" id="rocket-to-top">
+    <div style="opacity:0;display: block;" class="level-2"></div>
+    <div class="level-3"></div>
+</div>
 <script type="text/javascript">
    $(function(){
         $(".pic").click(function(){
@@ -195,6 +245,66 @@
             $(this).fadeOut("fast");
         });
     }
+    $(function() {
+    var e = $("#rocket-to-top"),
+    t = $(document).scrollTop(),
+    n,
+    r,
+    i = !0;
+    $(window).scroll(function() {
+        var t = $(document).scrollTop();
+        t == 0 ? e.css("background-position") == "0px 0px" ? e.fadeOut("slow") : i && (i = !1, $(".level-2").css("opacity", 1), e.delay(100).animate({
+            marginTop: "-1000px"
+        },
+        "normal",
+        function() {
+            e.css({
+                "margin-top": "-125px",
+                display: "none"
+            }),
+            i = !0
+        })) : e.fadeIn("slow")
+    }),
+    e.hover(function() {
+        $(".level-2").stop(!0).animate({
+            opacity: 1
+        })
+    },
+    function() {
+        $(".level-2").stop(!0).animate({
+            opacity: 0
+        })
+    }),
+    $(".level-3").click(function() {
+        function t() {
+            var t = e.css("background-position");
+            if (e.css("display") == "none" || i == 0) {
+                clearInterval(n),
+                e.css("background-position", "0px 0px");
+                return
+            }
+            switch (t){
+            case "0px 0px":
+                e.css("background-position", "-298px 0px");
+                break;
+            case "-298px 0px":
+                e.css("background-position", "-447px 0px");
+                break;
+            case "-447px 0px":
+                e.css("background-position", "-596px 0px");
+                break;
+            case "-596px 0px":
+                e.css("background-position", "-745px 0px");
+                break;
+            case "-745px 0px":
+                e.css("background-position", "-298px 0px");
+            }
+        }
+        if (!i) return;
+        n = setInterval(t, 50),
+        $("html,body").animate({scrollTop: 0},"slow");
+    });
+});
 </script>
 </body>
 

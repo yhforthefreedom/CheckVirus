@@ -11,13 +11,12 @@ import shutil
 
 
 def get_device_list():
-    res = os.popen("adb devices")
-    res_str = res.readlines()
-    res.close()
+    _res = os.popen("adb devices")
+    res_str = _res.readlines()
     device_list = [sub.split('\t')[0] for sub in res_str[1:-1] if sub.split('\t')[1].strip() == 'device']
     device_status = ''
-    for i in res_str[1:-1]:
-        device_status += i
+    for _i in res_str[1:-1]:
+        device_status += _i
     if device_status:
         logger.info(f'在线Android设备状态：\n{device_status}')
     else:
@@ -40,10 +39,10 @@ def push_file(udid, apk_path, result_list):
 
 
 def is_brand(udid):
-    brand = os.popen(f'adb -s {udid} shell getprop ro.product.brand')
-    brand = brand.read().strip()
-    logger.info(f'Android设备{udid}手机品牌是{brand}')
-    return brand
+    _brand = os.popen(f'adb -s {udid} shell getprop ro.product.brand')
+    _brand = _brand.read().strip()
+    logger.info(f'Android设备{udid}手机品牌是{_brand}')
+    return _brand
 
 
 def is_model(udid):
@@ -58,9 +57,9 @@ def read_xml(udid, keyword):
     while True:
         os.system(f'adb -s {udid} shell uiautomator dump')
         try:
-            res = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
-            if keyword in res:
-                return res
+            _res = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
+            if keyword in _res:
+                return _res
             retry_count += 1
             if retry_count > 3:
                 return ''
@@ -117,10 +116,11 @@ def auto_click(udid, package, file=None, apk_path=None, apk_count=None):
 
 def is_check(udid):
     while True:
-        res = read_xml(udid, '权限')
-        if not res:
+        _res = read_xml(udid, '权限')
+        if not _res:
             break
-        if '安装准备中' not in res and '正在查验' not in res and '正在扫描' not in res and '正为您' not in res and '风险检测中' not in res:
+        if '安装准备中' not in _res and '正在查验' not in _res and '正在扫描' not in _res and \
+                '正为您' not in _res and '风险检测中' not in _res:
             result = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
             if '病毒' in result:
                 return 'yes'
@@ -276,6 +276,7 @@ if __name__ == '__main__':
                     for i in range(0, group):
                         shutil.rmtree(f'{file_path}/{i}')
                 if img_list:
+                    virus_list = []
                     failed = 0
                     apk_arr = [i[:-4] for i in target_apk]
                     res = dict()
@@ -293,6 +294,9 @@ if __name__ == '__main__':
                         for img in img_list:
                             if 'yes' in img:
                                 failed += 1
+                                app = img.split('_')[0]
+                                if app not in virus_list:
+                                    virus_list.append(app)
                             if 'oppo' in img.lower() and i in img:
                                 if 'yes' in img:
                                     res[i].update({"oppo": {'address': f'{path}/img/{img}', 'is_virus': 1}})
@@ -322,8 +326,8 @@ if __name__ == '__main__':
                         'model_list': model_list,
                         'duration': round(end_time - start_time, 2),
                         'status': {'pass': int(total-failed), 'fail': int(failed),
-                                   'fail_rate': fail_rate, 'pass_rate': round((100 - fail_rate), 1)}
-
+                                   'fail_rate': fail_rate, 'pass_rate': round((100 - fail_rate), 1)},
+                        'virus_list': virus_list
                     }
                     report_context = {
                         "context": context
