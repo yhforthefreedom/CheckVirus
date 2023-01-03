@@ -59,18 +59,23 @@ def read_xml(udid, keyword):
         try:
             _res = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
             if keyword in _res:
-                return _res
+                return _res, 1
             retry_count += 1
-            if retry_count > 3:
+            if retry_count >= 3:
+                if keyword[:10] in _res:
+                    return _res, 2
                 return ''
         except subprocess.CalledProcessError:
             logger.warning(f'Android设备{udid}已拔出，无法正常完成检测')
             return ''
 
 
-def parse_location(keyword, text):
+def parse_location(keyword, text, mode=1):
     try:
-        location = re.findall(f'text="{keyword}".*?bounds="(.*?)"', text)[0]
+        if mode == 1:
+            location = re.findall(f'text="{keyword}".*?bounds="(.*?)"', text)[0]
+        else:
+            location = re.findall(f'text="{keyword[:10]}.*?".*?bounds="(.*?)"', text)[0]
         _x = location.split('][')[0][1:].split(',')
         _y = location.split('][')[-1][:-1].split(',')
         x = str((int(_x[0]) + int(_y[0])) // 2)
@@ -83,7 +88,7 @@ def parse_location(keyword, text):
 def auto_click(udid, package, file=None, apk_path=None, apk_count=None):
     logger.info(f'Android设备{udid}正在启动文件管理')
     os.system(f'adb -s {udid} shell monkey -p {package} 1')
-    for keyword in ['我的手机', '手机存储', '设备存储', '手机']:
+    for keyword in ['我的手机', '手机存储', '设备存储', '手机', '内部存储']:
         logger.info(f'Android设备{udid}寻找关键字"{keyword}"')
         os.system(f'adb -s {udid} shell uiautomator dump')
         text = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
@@ -92,25 +97,25 @@ def auto_click(udid, package, file=None, apk_path=None, apk_count=None):
             x, y = parse_location(keyword, text)
             os.system(f'adb -s {udid} shell input tap {x} {y}')
             break
-    res2 = read_xml(udid, '111')
-    x, y = parse_location('111', res2)
+    res2, mode = read_xml(udid, '111')
+    x, y = parse_location('111', res2, mode)
     os.system(f'adb -s {udid} shell input tap {x} {y}')
 
     if not file:
-        res3 = read_xml(udid, '1.apk')
-        x, y = parse_location('1.apk', res3)
+        res3, mode = read_xml(udid, '1.apk')
+        x, y = parse_location('1.apk', res3, mode)
 
     else:
         if apk_count > 6:
-            res4 = read_xml(udid, '0')
-            x, y = parse_location('0', res4)
+            res4, mode = read_xml(udid, '0')
+            x, y = parse_location('0', res4, mode)
             os.system(f'adb -s {udid} shell input tap {x} {y}')
         else:
-            res3 = read_xml(udid, apk_path.split('\\')[-1])
-            x, y = parse_location(apk_path.split('\\')[-1], res3)
+            res3, mode = read_xml(udid, apk_path.split('\\')[-1])
+            x, y = parse_location(apk_path.split('\\')[-1], res3, mode)
             os.system(f'adb -s {udid} shell input tap {x} {y}')
-        res5 = read_xml(udid, file)
-        x, y = parse_location(file, res5)
+        res5, mode = read_xml(udid, file)
+        x, y = parse_location(file, res5, mode)
     os.system(f'adb -s {udid} shell input tap {x} {y}')
 
 
@@ -160,10 +165,14 @@ def package_info(file):
 
 
 def check_virus(udid, apk_path, result_list=None):
+    brand = is_brand(udid)
+    if brand.lower() not in ['oppo', 'vivo', 'xiaomi', 'huawei', 'honor']:
+        logger.error(f'Android设备{udid}的品牌机型暂未适配')
+        return
+    is_model(udid)
     os.system(f"adb -s {udid} shell rm -rf /sdcard/111")
     push_file(udid, apk_path, result_list)
-    brand = is_brand(udid)
-    is_model(udid)
+
     if not result_list:
         if brand.lower() == 'oppo':
             os.system(f'adb -s {udid} shell am force-stop com.coloros.filemanager')
@@ -183,9 +192,6 @@ def check_virus(udid, apk_path, result_list=None):
         elif brand.lower() == 'vivo':
             os.system(f'adb -s {udid} shell am force-stop com.android.filemanager')
             auto_click(udid, 'com.android.filemanager')
-        else:
-            logger.error(f'Android设备{udid}的品牌机型暂未适配')
-            return
         screenshot(brand, udid)
         os.system(f"adb -s {udid} shell rm -rf /sdcard/111")
         logger.info(f'Android设备{udid}病毒检查完成')
@@ -211,20 +217,17 @@ def check_virus(udid, apk_path, result_list=None):
                 elif brand.lower() == 'vivo':
                     os.system(f'adb -s {udid} shell am force-stop com.android.filemanager')
                     auto_click(udid, 'com.android.filemanager', value, apk_path, len(result_list))
-                else:
-                    logger.error(f'Android设备{udid}的品牌机型暂未适配')
-                    return
             if index != 0:
                 if index % 6 == 0:  # 下一个文件夹的apk
                     count += 1
                     os.system(f'adb -s {udid} shell input keyevent 4')
-                    res2 = read_xml(udid, f'{count}')
-                    x, y = parse_location(f'{count}', res2)
+                    res2, mode = read_xml(udid, f'{count}')
+                    x, y = parse_location(f'{count}', res2, mode)
                     os.system(f'adb -s {udid} shell input tap {x} {y}')
-                res1 = read_xml(udid, value)
-                x, y = parse_location(value, res1)
+                res1, mode = read_xml(udid, value)
+                x, y = parse_location(value, res1, mode)
                 os.system(f'adb -s {udid} shell input tap {x} {y}')
-            app_name = value.split('.')[0]
+            app_name = value.split('.apk')[0]
             screenshot(brand, udid, app_name)
             logger.info(f'Android设备{udid}的应用{value}病毒检查完成')
             os.system(f'adb -s {udid} shell input keyevent 4')
