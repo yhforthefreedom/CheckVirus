@@ -166,7 +166,7 @@ def package_info(file):
 
 def check_virus(udid, apk_path, result_list=None):
     brand = is_brand(udid)
-    if brand.lower() not in ['oppo', 'vivo', 'xiaomi', 'huawei', 'honor']:
+    if brand.lower() not in ['oppo', 'vivo', 'xiaomi', 'huawei', 'honor', 'redmi']:
         logger.error(f'Android设备{udid}的品牌机型暂未适配')
         return
     is_model(udid)
@@ -186,7 +186,7 @@ def check_virus(udid, apk_path, result_list=None):
             else:
                 os.system(f'adb -s {udid} shell am force-stop com.hihonor.filemanager')
                 auto_click(udid, 'com.hihonor.filemanager')
-        elif brand.lower() == 'xiaomi':
+        elif brand.lower() == 'xiaomi' or brand.lower() == 'redmi':
             os.system(f'adb -s {udid} shell am force-stop com.android.fileexplorer')
             auto_click(udid, 'com.android.fileexplorer')
         elif brand.lower() == 'vivo':
@@ -211,7 +211,7 @@ def check_virus(udid, apk_path, result_list=None):
                     else:
                         os.system(f'adb -s {udid} shell am force-stop com.hihonor.filemanager')
                         auto_click(udid, 'com.hihonor.filemanager', value, apk_path, len(result_list))
-                elif brand.lower() == 'xiaomi':
+                elif brand.lower() == 'xiaomi' or brand.lower() == 'redmi':
                     os.system(f'adb -s {udid} shell am force-stop com.android.fileexplorer')
                     auto_click(udid, 'com.android.fileexplorer', value, apk_path, len(result_list))
                 elif brand.lower() == 'vivo':
@@ -305,7 +305,7 @@ if __name__ == '__main__':
                                     res[i].update({"oppo": {'address': f'{path}/img/{img}', 'is_virus': 1}})
                                 else:
                                     res[i].update({"oppo": {'address': f'{path}/img/{img}'}})
-                            elif 'xiaomi' in img.lower() and i in img:
+                            elif ('xiaomi' in img.lower() or 'redmi' in img.lower()) and i in img:
                                 if 'yes' in img:
                                     res[i].update({"xiaomi": {'address': f'{path}/img/{img}', 'is_virus': 1}})
                                 else:
