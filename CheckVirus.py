@@ -121,11 +121,11 @@ def auto_click(udid, package, file=None, apk_path=None, apk_count=None):
 
 def is_check(udid):
     while True:
-        _res = read_xml(udid, '权限')
+        _res = read_xml(udid, '权限')[0]
         if not _res:
             break
         if '安装准备中' not in _res and '正在查验' not in _res and '正在扫描' not in _res and \
-                '正为您' not in _res and '风险检测中' not in _res:
+                '正为您' not in _res and '风险检测中' not in _res and '安装包扫描中' not in _res:
             result = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
             if '病毒' in result:
                 return 'yes'
