@@ -120,6 +120,11 @@ def auto_click(udid, package, file=None, apk_path=None, apk_count=None):
         res5, mode = read_xml(udid, file)
         x, y = parse_location(file, res5, mode)
     os.system(f'adb -s {udid} shell input tap {x} {y}')
+    os.system(f'adb -s {udid} shell uiautomator dump')
+    res6 = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
+    if res6:
+        x, y = parse_location('以后都允许', res6)
+        os.system(f'adb -s {udid} shell input tap {x} {y}')
 
 
 def is_check(udid):
@@ -128,7 +133,7 @@ def is_check(udid):
         if not _res:
             break
         if '安装准备中' not in _res and '正在查验' not in _res and '正在扫描' not in _res and \
-                '正为您' not in _res and '风险检测中' not in _res and '安装包扫描中' not in _res:
+                '正为您' not in _res and '风险检测中' not in _res and '安装包扫描中' not in _res and '正在解析' not in _res:
             result = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
             if '病毒' in result:
                 return 'yes'
