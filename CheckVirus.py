@@ -122,7 +122,7 @@ def auto_click(udid, package, file=None, apk_path=None, apk_count=None):
     os.system(f'adb -s {udid} shell input tap {x} {y}')
     os.system(f'adb -s {udid} shell uiautomator dump')
     res6 = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
-    if res6:
+    if '允许本次安装' in res6:
         x, y = parse_location('以后都允许', res6)
         os.system(f'adb -s {udid} shell input tap {x} {y}')
 
