@@ -122,9 +122,13 @@ def auto_click(udid, package, file=None, apk_path=None, apk_count=None):
     os.system(f'adb -s {udid} shell input tap {x} {y}')
     os.system(f'adb -s {udid} shell uiautomator dump')
     res6 = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
-    if '允许本次安装' in res6:
+    if '以后都允许' in res6:
         x, y = parse_location('以后都允许', res6)
+    elif '记住我的选择' in res6:
+        x, y = parse_location('记住我的选择', res6)
         os.system(f'adb -s {udid} shell input tap {x} {y}')
+        x, y = parse_location('允许', res6)
+    os.system(f'adb -s {udid} shell input tap {x} {y}')
 
 
 def is_check(udid):
@@ -306,8 +310,9 @@ if __name__ == '__main__':
                             if 'yes' in img and i in img:
                                 failed += 1
                                 app = img.split('_')[0]
-                                max_code = db.search_data(app) if db.search_data(app) else 0
-                                if max_code < int(res[i]['version_code']):
+                                max_code = db.search_version_code(app) if db.search_version_code(app) else 0
+                                if max_code <= int(res[i]['version_code']) and \
+                                        tuple([img.split('_')[1]]) not in db.search_brand(app):
                                     virus_data = (app, res[i]['package_name'], img.split('_')[1], img.split('_')[2],
                                                   res[i]['version_code'], res[i]['version_name'],
                                                   time.strftime("%Y-%m-%d %H:%M:%S"))

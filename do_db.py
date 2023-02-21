@@ -33,6 +33,10 @@ class DoDb:
         self.c.execute(f"INSERT INTO virus VALUES{data}")
         self.conn.commit()
 
-    def search_data(self, data):
+    def search_version_code(self, data):
         self.c.execute(f"SELECT max(version_code) FROM virus WHERE app_name='{data}'")
         return self.c.fetchone()[0]
+
+    def search_brand(self, data):
+        self.c.execute(f"SELECT brand FROM virus WHERE app_name='{data}'")
+        return self.c.fetchall()
