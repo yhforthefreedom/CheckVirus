@@ -311,13 +311,19 @@ if __name__ == '__main__':
                                 failed += 1
                                 app = img.split('_')[0]
                                 max_code = db.search_version_code(app) if db.search_version_code(app) else 0
-                                if max_code <= int(res[i]['version_code']) and \
-                                        tuple([img.split('_')[1]]) not in db.search_brand(app):
+                                if max_code < int(res[i]['version_code']) or \
+                                        (max_code == int(res[i]['version_code']) and
+                                         tuple([img.split('_')[1]]) not in db.search_brand(app)):
                                     virus_data = (app, res[i]['package_name'], img.split('_')[1], img.split('_')[2],
                                                   res[i]['version_code'], res[i]['version_name'],
                                                   time.strftime("%Y-%m-%d %H:%M:%S"))
                                     db.insert_data(virus_data)
                                     logger.info(f'插入数据：{virus_data}到数据库')
+                                elif max_code == int(res[i]['version_code']) and tuple(
+                                        [img.split('_')[1]]) in db.search_brand(app):
+                                    db.update_time(time.strftime("%Y-%m-%d %H:%M:%S"), app, res[i]['version_code'],
+                                                   img.split('_')[1], img.split('_')[2])
+                                    logger.info(f'更新检查时间：{app}')
                                 if app not in virus_list:
                                     virus_list.append(app)
                             if 'oppo' in img.lower() and i in img:

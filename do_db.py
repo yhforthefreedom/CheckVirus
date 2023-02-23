@@ -40,3 +40,8 @@ class DoDb:
     def search_brand(self, data):
         self.c.execute(f"SELECT brand FROM virus WHERE app_name='{data}'")
         return self.c.fetchall()
+
+    def update_time(self, data1, data2, data3, data4, data5):
+        self.c.execute(f"UPDATE virus SET check_time='{data1}' where "
+                       f"app_name='{data2}' and version_code='{data3}' and brand='{data4}' and model='{data5}'")
+        self.conn.commit()
