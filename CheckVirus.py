@@ -67,10 +67,10 @@ def read_xml(udid, keyword):
             if retry_count >= 3:
                 if keyword[:10] in _res:
                     return _res, 2
-                return ''
+                return '', ''
         except subprocess.CalledProcessError:
             logger.warning(f'Android设备{udid}已拔出，无法正常完成检测')
-            return ''
+            return '', ''
 
 
 def parse_location(keyword, text, mode=1):
@@ -132,18 +132,26 @@ def auto_click(udid, package, file=None, apk_path=None, apk_count=None):
 
 
 def is_check(udid):
+    timeout = 0
     while True:
-        _res = read_xml(udid, '权限')[0]
-        if not _res:
+        os.system(f'adb -s {udid} shell uiautomator dump')
+        try:
+            _res = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
+            if '安装准备中' not in _res and '正在查验' not in _res and '正在扫描' not in _res and \
+                    '正为您' not in _res and '风险检测中' not in _res and '安装包扫描中' not in _res and '正在解析' not in _res:
+                result = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
+                if '病毒' in result:
+                    return 'yes'
+                else:
+                    return 'no'
+            time.sleep(1)
+            timeout += 1
+            if timeout >= 10:
+                logger.warning(f'Android设备{udid}检测应用时间超时')
+                break
+        except subprocess.CalledProcessError:
+            logger.warning(f'Android设备{udid}已拔出，无法正常完成检测')
             break
-        if '安装准备中' not in _res and '正在查验' not in _res and '正在扫描' not in _res and \
-                '正为您' not in _res and '风险检测中' not in _res and '安装包扫描中' not in _res and '正在解析' not in _res:
-            result = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
-            if '病毒' in result:
-                return 'yes'
-            else:
-                return 'no'
-        time.sleep(1)
 
 
 def screenshot(brand, udid, app_name=None):
