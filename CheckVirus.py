@@ -192,26 +192,18 @@ def check_virus(udid, apk_path, result_list=None):
     is_model(udid)
     os.system(f"adb -s {udid} shell rm -rf /sdcard/111")
     push_file(udid, apk_path, result_list)
-
+    file_manager_dict = {
+        'oppo': 'com.coloros.filemanager',
+        'vivo': 'com.android.filemanager',
+        'xiaomi': 'com.android.fileexplorer',
+        'redmi': 'com.android.fileexplorer',
+        'huawei': 'com.huawei.filemanager',
+        'honor': 'com.hihonor.filemanager'
+    }
     if not result_list:
-        if brand.lower() == 'oppo':
-            os.system(f'adb -s {udid} shell am force-stop com.coloros.filemanager')
-            auto_click(udid, 'com.coloros.filemanager')
-        elif brand.lower() == 'huawei' or brand.lower() == 'honor':
-            package = os.popen(f'adb -s {udid} shell pm list package | findstr com.huawei.filemanager') \
-                .read().strip()
-            if package:
-                os.system(f'adb -s {udid} shell am force-stop com.huawei.filemanager')
-                auto_click(udid, 'com.huawei.filemanager')
-            else:
-                os.system(f'adb -s {udid} shell am force-stop com.hihonor.filemanager')
-                auto_click(udid, 'com.hihonor.filemanager')
-        elif brand.lower() == 'xiaomi' or brand.lower() == 'redmi':
-            os.system(f'adb -s {udid} shell am force-stop com.android.fileexplorer')
-            auto_click(udid, 'com.android.fileexplorer')
-        elif brand.lower() == 'vivo':
-            os.system(f'adb -s {udid} shell am force-stop com.android.filemanager')
-            auto_click(udid, 'com.android.filemanager')
+        package = file_manager_dict[brand.lower()]
+        os.system(f'adb -s {udid} shell am force-stop {package}')
+        auto_click(udid, package)
         screenshot(brand, udid)
         os.system(f"adb -s {udid} shell rm -rf /sdcard/111")
         logger.info(f'Android设备{udid}病毒检查完成')
@@ -219,24 +211,9 @@ def check_virus(udid, apk_path, result_list=None):
         count = 0
         for index, value in enumerate(result_list):
             if index == 0:
-                if brand.lower() == 'oppo':
-                    os.system(f'adb -s {udid} shell am force-stop com.coloros.filemanager')
-                    auto_click(udid, 'com.coloros.filemanager', value, apk_path, len(result_list))
-                elif brand.lower() == 'huawei' or brand.lower() == 'honor':
-                    package = os.popen(f'adb -s {udid} shell pm list package | findstr com.huawei.filemanager')\
-                        .read().strip()
-                    if package:
-                        os.system(f'adb -s {udid} shell am force-stop com.huawei.filemanager')
-                        auto_click(udid, 'com.huawei.filemanager', value, apk_path, len(result_list))
-                    else:
-                        os.system(f'adb -s {udid} shell am force-stop com.hihonor.filemanager')
-                        auto_click(udid, 'com.hihonor.filemanager', value, apk_path, len(result_list))
-                elif brand.lower() == 'xiaomi' or brand.lower() == 'redmi':
-                    os.system(f'adb -s {udid} shell am force-stop com.android.fileexplorer')
-                    auto_click(udid, 'com.android.fileexplorer', value, apk_path, len(result_list))
-                elif brand.lower() == 'vivo':
-                    os.system(f'adb -s {udid} shell am force-stop com.android.filemanager')
-                    auto_click(udid, 'com.android.filemanager', value, apk_path, len(result_list))
+                package = file_manager_dict[brand.lower()]
+                os.system(f'adb -s {udid} shell am force-stop {package}')
+                auto_click(udid, package, value, apk_path, len(result_list))
             if index != 0:
                 if index % 6 == 0:  # 下一个文件夹的apk
                     count += 1
@@ -322,7 +299,7 @@ if __name__ == '__main__':
                                 if max_code < int(res[i]['version_code']) or \
                                         (max_code == int(res[i]['version_code']) and
                                          tuple([img.split('_')[1]]) not in db.search_brand(app)):
-                                    virus_data = (app, res[i]['package_name'], img.split('_')[1], img.split('_')[2],
+                                    virus_data = (app, res[i]['package_name'], img.split('_')[-4], img.split('_')[-3],
                                                   res[i]['version_code'], res[i]['version_name'],
                                                   time.strftime("%Y-%m-%d %H:%M:%S"))
                                     db.insert_data(virus_data)
@@ -334,26 +311,11 @@ if __name__ == '__main__':
                                     logger.info(f'更新检查时间：{app}')
                                 if app not in virus_list:
                                     virus_list.append(app)
-                            if 'oppo' in img.lower() and i in img:
-                                if 'yes' in img:
-                                    res[i].update({"oppo": {'address': f'{path}/img/{img}', 'is_virus': 1}})
-                                else:
-                                    res[i].update({"oppo": {'address': f'{path}/img/{img}'}})
-                            elif ('xiaomi' in img.lower() or 'redmi' in img.lower()) and i in img:
-                                if 'yes' in img:
-                                    res[i].update({"xiaomi": {'address': f'{path}/img/{img}', 'is_virus': 1}})
-                                else:
-                                    res[i].update({"xiaomi": {'address': f'{path}/img/{img}'}})
-                            elif 'vivo' in img.lower() and i in img:
-                                if 'yes' in img:
-                                    res[i].update({"vivo": {'address': f'{path}/img/{img}', 'is_virus': 1}})
-                                else:
-                                    res[i].update({"vivo": {'address': f'{path}/img/{img}'}})
-                            elif ('huawei' in img.lower() or 'honor' in img.lower()) and i in img:
-                                if 'yes' in img:
-                                    res[i].update({"huawei": {'address': f'{path}/img/{img}', 'is_virus': 1}})
-                                else:
-                                    res[i].update({"huawei": {'address': f'{path}/img/{img}'}})
+                            if i in img and 'yes' in img:
+                                res[i].update(
+                                    {img.split('_')[-4].lower(): {'address': f'{path}/img/{img}', 'is_virus': 1}})
+                            elif i in img and 'no' in img:
+                                res[i].update({img.split('_')[-4].lower(): {'address': f'{path}/img/{img}'}})
                     total = len(devices_list)*len(apk_arr)
                     fail_rate = round(failed / total * 100, 1)
                     context = {
