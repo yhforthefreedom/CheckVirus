@@ -8,6 +8,7 @@ import argparse
 from jinja2 import Environment, FileSystemLoader
 import webbrowser
 import shutil
+from datetime import datetime
 from do_db import DoDb
 
 db = DoDb()
@@ -281,41 +282,36 @@ if __name__ == '__main__':
                     apk_arr = [i[:-4] for i in target_apk]
                     res = dict()
                     for i in apk_arr:
-                        res[i] = {}
+                        res.setdefault(i, {})
                         if package_info(f'{file_path}/{i}.apk'):
                             a, b, c = package_info(f'{file_path}/{i}.apk')
-                            res[i].update({"package_name": a})
-                            res[i].update({"version_code": b})
-                            res[i].update({"version_name": c})
-                        res[i].update({"huawei": {}})
-                        res[i].update({"xiaomi": {}})
-                        res[i].update({"oppo": {}})
-                        res[i].update({"vivo": {}})
+                            res[i].update({"package_name": a, "version_code": b, "version_name": c})
+                        res[i].update({"huawei": {}, "xiaomi": {}, "oppo": {}, "vivo": {}})
                         for img in img_list:
-                            if 'yes' in img and i in img:
+                            phone, serial, check_time = img.split('_')[-4:-1]
+                            app = img.split(f'_{phone}')[0]
+                            if i in img and 'yes' in img:
+                                check_time = datetime.strptime(check_time, "%Y%m%d%H%M%S")
                                 failed += 1
-                                app = img.split('_')[0]
-                                max_code = db.search_version_code(app) if db.search_version_code(app) else 0
+                                max_code = db.search_version_code(app) or 0
                                 if max_code < int(res[i]['version_code']) or \
                                         (max_code == int(res[i]['version_code']) and
-                                         tuple([img.split('_')[1]]) not in db.search_brand(app)):
-                                    virus_data = (app, res[i]['package_name'], img.split('_')[-4], img.split('_')[-3],
+                                         tuple([phone]) not in db.search_brand(app)):
+                                    virus_data = (app, res[i]['package_name'], phone, serial,
                                                   res[i]['version_code'], res[i]['version_name'],
-                                                  time.strftime("%Y-%m-%d %H:%M:%S"))
+                                                  check_time)
                                     db.insert_data(virus_data)
                                     logger.info(f'插入数据：{virus_data}到数据库')
                                 elif max_code == int(res[i]['version_code']) and tuple(
-                                        [img.split('_')[1]]) in db.search_brand(app):
-                                    db.update_time(time.strftime("%Y-%m-%d %H:%M:%S"), app, res[i]['version_code'],
-                                                   img.split('_')[1], img.split('_')[2])
+                                        [phone]) in db.search_brand(app):
+                                    db.update_time(check_time, app, res[i]['version_code'],
+                                                   phone, serial)
                                     logger.info(f'更新检查时间：{app}')
                                 if app not in virus_list:
                                     virus_list.append(app)
-                            if i in img and 'yes' in img:
-                                res[i].update(
-                                    {img.split('_')[-4].lower(): {'address': f'{path}/img/{img}', 'is_virus': 1}})
+                                res[i].update({phone.lower(): {'address': f'{path}/img/{img}', 'is_virus': 1}})
                             elif i in img and 'no' in img:
-                                res[i].update({img.split('_')[-4].lower(): {'address': f'{path}/img/{img}'}})
+                                res[i].update({phone.lower(): {'address': f'{path}/img/{img}'}})
                     total = len(devices_list)*len(apk_arr)
                     fail_rate = round(failed / total * 100, 1)
                     context = {
