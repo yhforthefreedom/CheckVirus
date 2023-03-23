@@ -30,18 +30,18 @@ class DoDb:
         self.conn.close()
 
     def insert_data(self, data):
-        self.c.execute(f"INSERT INTO virus VALUES{data}")
+        self.c.execute("INSERT INTO virus VALUES(?, ?, ?, ?, ?, ?, ?)", data)
         self.conn.commit()
 
     def search_version_code(self, data):
-        self.c.execute(f"SELECT max(version_code) FROM virus WHERE app_name='{data}'")
+        self.c.execute("SELECT max(version_code) FROM virus WHERE app_name=?", (data,))
         return self.c.fetchone()[0]
 
     def search_brand(self, data):
-        self.c.execute(f"SELECT brand FROM virus WHERE app_name='{data}'")
+        self.c.execute("SELECT brand FROM virus WHERE app_name=?", (data,))
         return self.c.fetchall()
 
     def update_time(self, data1, data2, data3, data4, data5):
-        self.c.execute(f"UPDATE virus SET check_time='{data1}' where "
-                       f"app_name='{data2}' and version_code='{data3}' and brand='{data4}' and model='{data5}'")
+        self.c.execute("UPDATE virus SET check_time=? where app_name=? and version_code=? and brand=? and model=?",
+                       (data1, data2, data3, data4, data5))
         self.conn.commit()
