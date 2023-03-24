@@ -15,12 +15,10 @@ db = DoDb()
 
 
 def get_device_list():
-    _res = os.popen("adb devices")
-    res_str = _res.readlines()
-    device_list = [sub.split('\t')[0] for sub in res_str[1:-1] if sub.split('\t')[1].strip() == 'device']
-    device_status = ''
-    for _i in res_str[1:-1]:
-        device_status += _i
+    result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
+    devices = result.stdout.splitlines()
+    device_list = [sub.split('\t')[0] for sub in devices[1:-1] if sub.split('\t')[1].strip() == 'device']
+    device_status = '\n'.join(devices[1:-1])
     if device_status:
         logger.info(f'在线Android设备状态：\n{device_status}')
     else:
