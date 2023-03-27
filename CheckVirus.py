@@ -279,6 +279,14 @@ if __name__ == '__main__':
                     failed = 0
                     apk_arr = [i[:-4] for i in target_apk]
                     res = dict()
+                    brand_dict = {
+                        'oppo': 'oppo',
+                        'vivo': 'vivo',
+                        'xiaomi': 'xiaomi',
+                        'redmi': 'xiaomi',
+                        'huawei': 'huawei',
+                        'honor': 'huawei'
+                    }
                     for i in apk_arr:
                         res.setdefault(i, {})
                         if package_info(f'{file_path}/{i}.apk'):
@@ -307,9 +315,9 @@ if __name__ == '__main__':
                                     logger.info(f'更新检查时间：{app}')
                                 if app not in virus_list:
                                     virus_list.append(app)
-                                res[i].update({phone.lower(): {'address': f'{path}/img/{img}', 'is_virus': 1}})
+                                res[i].update({brand_dict[phone.lower()]: {'address': f'{path}/img/{img}', 'is_virus': 1}})
                             elif i in img and 'no' in img:
-                                res[i].update({phone.lower(): {'address': f'{path}/img/{img}'}})
+                                res[i].update({brand_dict[phone.lower()]: {'address': f'{path}/img/{img}'}})
                     total = len(devices_list)*len(apk_arr)
                     fail_rate = round(failed / total * 100, 1)
                     context = {
