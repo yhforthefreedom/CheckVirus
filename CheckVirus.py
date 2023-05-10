@@ -10,6 +10,7 @@ import webbrowser
 import shutil
 from datetime import datetime
 from do_db import DoDb
+from androguard.core.bytecodes.apk import APK
 
 db = DoDb()
 
@@ -173,14 +174,19 @@ def screenshot(brand, udid, app_name=None):
 
 
 def package_info(file):
-    envs = os.getenv('path')
-    for env in envs.split(';'):
-        if 'build-tools' in env:
-            info = subprocess.check_output(f'aapt2 dump badging {file} | findstr versionName', shell=True)\
-                .decode('utf-8')
-            package_name, version_code, version_name = re.findall(r"name='(.*?)' versionCode='(.*?)' "
-                                                                  r"versionName='(.*?)'", info)[0]
-            return package_name, version_code, version_name
+    tmp = APK(file)
+    package_name = tmp.get_package()
+    version_code = tmp.get_androidversion_code()
+    version_name = tmp.get_androidversion_name()
+    return package_name, version_code, version_name
+
+
+def has_file_manager(udid):
+    result = os.popen(f'adb -s {udid} shell pm list packages').read()
+    if 'com.huawei.filemanager' in result:
+        return False
+    else:
+        return True
 
 
 def check_virus(udid, apk_path, result_list=None):
@@ -197,7 +203,7 @@ def check_virus(udid, apk_path, result_list=None):
         'xiaomi': 'com.android.fileexplorer',
         'redmi': 'com.android.fileexplorer',
         'huawei': 'com.huawei.filemanager',
-        'honor': 'com.hihonor.filemanager'
+        'honor': 'com.hihonor.filemanager' if has_file_manager(udid) else 'com.huawei.filemanager'
     }
     if not result_list:
         package = file_manager_dict[brand.lower()]
@@ -315,7 +321,8 @@ if __name__ == '__main__':
                                     logger.info(f'更新检查时间：{app}')
                                 if app not in virus_list:
                                     virus_list.append(app)
-                                res[i].update({brand_dict[phone.lower()]: {'address': f'{path}/img/{img}', 'is_virus': 1}})
+                                res[i].update({brand_dict[phone.lower()]: {'address': f'{path}/img/{img}',
+                                                                           'is_virus': 1}})
                             elif i in img and 'no' in img:
                                 res[i].update({brand_dict[phone.lower()]: {'address': f'{path}/img/{img}'}})
                     total = len(devices_list)*len(apk_arr)
