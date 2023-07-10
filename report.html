@@ -82,9 +82,9 @@
                             <tr>
                                 <td>Virus APP</td>
 
-                                <td class="text-right">
+                                <td class="text-right" style="display:flex;flex-wrap:wrap;text-align:right;justify-content:flex-end;">
                                     {% for app in context.virus_list %}
-                                    <a href="#{{app}}">{{app}}</a>
+                                    <a href="#{{app}}">{{app}}</a>&nbsp;
                                     {% endfor %}
                                 </td>
                             </tr>
