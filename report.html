@@ -83,7 +83,12 @@
                                 <td>Virus APP</td>
 
                                 <td class="text-right" style="display:flex;flex-wrap:wrap;text-align:right;justify-content:flex-end;">
+                                    不能安装：
                                     {% for app in context.virus_list %}
+                                    <a href="#{{app}}">{{app}}</a>&nbsp;
+                                    {% endfor %}
+                                    能安装：
+                                    {% for app in context.unsure_virus_list %}
                                     <a href="#{{app}}">{{app}}</a>&nbsp;
                                     {% endfor %}
                                 </td>

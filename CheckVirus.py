@@ -91,10 +91,10 @@ def parse_location(keyword, text, mode=1):
 def auto_click(udid, package, file=None, apk_path=None, apk_count=None):
     logger.info(f'Android设备{udid}正在启动文件管理')
     os.system(f'adb -s {udid} shell monkey -p {package} 1')
+    os.system(f'adb -s {udid} shell uiautomator dump')
+    text = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
     for keyword in ['我的手机', '手机存储', '设备存储', '手机', '内部存储']:
         logger.info(f'Android设备{udid}寻找关键字"{keyword}"')
-        os.system(f'adb -s {udid} shell uiautomator dump')
-        text = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
         if keyword in text:
             logger.info(f'Android设备{udid}命中关键字"{keyword}"')
             x, y = parse_location(keyword, text)
@@ -124,11 +124,12 @@ def auto_click(udid, package, file=None, apk_path=None, apk_count=None):
     res6 = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
     if '以后都允许' in res6:
         x, y = parse_location('以后都允许', res6)
+        os.system(f'adb -s {udid} shell input tap {x} {y}')
     elif '记住我的选择' in res6:
         x, y = parse_location('记住我的选择', res6)
         os.system(f'adb -s {udid} shell input tap {x} {y}')
         x, y = parse_location('允许', res6)
-    os.system(f'adb -s {udid} shell input tap {x} {y}')
+        os.system(f'adb -s {udid} shell input tap {x} {y}')
 
 
 def is_check(udid):
@@ -141,7 +142,10 @@ def is_check(udid):
                     '正为您' not in _res and '风险检测中' not in _res and '安装包扫描中' not in _res and '正在解析' not in _res:
                 result = subprocess.check_output(f'adb -s {udid} shell cat /sdcard/window_dump.xml').decode('utf-8')
                 if '病毒' in result:
-                    return 'yes'
+                    if '无法继续安装' not in result:
+                        return 'yes'
+                    else:
+                        return 'unsure'
                 else:
                     return 'no'
             time.sleep(1)
@@ -221,6 +225,7 @@ def check_virus(udid, apk_path, result_list=None):
                 auto_click(udid, package, value, apk_path, len(result_list))
             if index != 0:
                 if index % 6 == 0:  # 下一个文件夹的apk
+                    time.sleep(0.5)
                     count += 1
                     os.system(f'adb -s {udid} shell input keyevent 4')
                     res2, mode = read_xml(udid, f'{count}')
@@ -282,6 +287,7 @@ if __name__ == '__main__':
                         shutil.rmtree(f'{file_path}/{i}')
                 if img_list:
                     virus_list = []
+                    unsure_virus_list = []
                     failed = 0
                     apk_arr = [i[:-4] for i in target_apk]
                     res = dict()
@@ -302,7 +308,7 @@ if __name__ == '__main__':
                         for img in img_list:
                             phone, serial, check_time = img.split('_')[-4:-1]
                             app = img.split(f'_{phone}')[0]
-                            if i in img and 'yes' in img:
+                            if i in img and ('yes' in img or 'unsure' in img):
                                 check_time = datetime.strptime(check_time, "%Y%m%d%H%M%S")
                                 failed += 1
                                 max_code = db.search_version_code(app) or 0
@@ -319,8 +325,10 @@ if __name__ == '__main__':
                                     db.update_time(check_time, app, res[i]['version_code'],
                                                    phone, serial)
                                     logger.info(f'更新检查时间：{app}')
-                                if app not in virus_list:
+                                if app not in virus_list and 'yes' in img:
                                     virus_list.append(app)
+                                if app not in unsure_virus_list and 'unsure' in img:
+                                    unsure_virus_list.append(app)
                                 res[i].update({brand_dict[phone.lower()]: {'address': f'{path}/img/{img}',
                                                                            'is_virus': 1}})
                             elif i in img and 'no' in img:
@@ -334,7 +342,8 @@ if __name__ == '__main__':
                         'duration': round(end_time - start_time, 2),
                         'status': {'pass': int(total-failed), 'fail': int(failed),
                                    'fail_rate': fail_rate, 'pass_rate': round((100 - fail_rate), 1)},
-                        'virus_list': virus_list
+                        'virus_list': virus_list,
+                        'unsure_virus_list': unsure_virus_list
                     }
                     report_context = {
                         "context": context
